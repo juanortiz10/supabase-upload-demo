@@ -31,3 +31,31 @@ body {
     text-wrap: balance;
   }
 }
+
+.drop-title {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.upload-btn {
+  margin-top: 24px;
+}
+
+.input-area {
+  height: 400px;
+  width: 100%;
+  background-color: #9E9E9E;
+  cursor: pointer;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 300ms;
+}
+
+.input-area:hover {
+  background-color: #757575;
+}
