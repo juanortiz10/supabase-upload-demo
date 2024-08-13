@@ -1,97 +1,94 @@
 'use client';
 
 import Image from "next/image";
-import { uploadUserInfo } from "../actions";
-import { ChangeEvent, FC, FormEvent, useState } from "react";
+import { ChangeEvent, FC, useState, useActionState, useRef } from "react";
 
+import { uploadUserInfo } from "../actions";
+import SubmitButton from "./SubmitButton";
+ 
 type FormProps = {
-    user: {
-        full_name: string;
-        email: string;
-        avatar_url: string;
-    };
-    avatarSignedUrl: string;
-    onSubmit?: ({}) => void;
+  user: User;
+  avatarSignedUrl: string;
+  onSubmit?: () => void;
+};
+
+const initialState: ActionState = {
+  error: null,
+  msg: null,
 };
 
 const Form: FC<FormProps> = ({ user, avatarSignedUrl }) => {
+  const [{ msg, error }, formAction] = useActionState(uploadUserInfo, initialState);
+
+  const inputFileRef = useRef<HTMLInputElement>(null);
+
   const [fullName, setFullName] = useState(user.full_name || '');
   const [email, setEmail] = useState(user.email || '');
-  const [file, setFile] = useState<File>();
   const [avatarUrl, setAvatarUrl] = useState<string>(avatarSignedUrl);
-
-   
-  const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const result = await uploadUserInfo({
-      avatarUrl: user.avatar_url,
-      email,
-      fullName,
-      file,
-    });
-
-    if (result.error) {
-      console.error('Error updating user: ', result.error);
-      return;
-    }
-
-    // TODO show a toast
-    alert('User updated successfully');
-  };
-
+  
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!event?.target?.files?.[0]) return;
 
     const { target: { files } } = event;
-    setFile(files[0]);
+
+    const nextUrl = URL.createObjectURL(files[0]);
+    setAvatarUrl(nextUrl);
   };
- 
+
+  const handleAvatarClick = () => {
+    inputFileRef.current?.click();
+  };
+  
   return (
-    <div className="flex bg-black justify-center items-center py-10">
-      <form className="flex flex-col" onSubmit={handleFormSubmit}>
+    <div className="flex bg-black flex-col justify-center items-center py-10">
+      <h2 className="text-3xl font-bold">Perfil</h2>
+      <form className="flex flex-col w-[240px]" action={formAction}>
         <h3 className="text-lg text-black">Perfil</h3>
         <Image
           src={avatarUrl}
           alt="profile-photo"
-          className="rounded-full w-48 h-48"
+          className="rounded-full w-48 h-48 object-cover mb-0 hover:opacity-[0.5] transition-opacity cursor-pointer self-center"
           width={120}
           height={120}
+          onClick={handleAvatarClick}
         />
-        <label className="block mt-4" htmlFor="file">
+        <input name="avatar_url" value={avatarUrl} className="hidden" readOnly />
+        <input name="id" value={user.id} className="hidden" readOnly />
+        <label className="block mt-4 text-sm" htmlFor="file">
           <span className="sr-only">Subir foto</span>
           <input
+            ref={inputFileRef}
             type="file"
-            className="block w-full h-6 text-sm text-slate-500 file:mr-4 file:px-4 file:rounded-sm file:border-0 file:text-sm file:bg-violet-50 file:text-black hover:file:bg-slate-200"
             name="file"
+            hidden
             onChange={handleImageChange}
             accept="image/*" 
           />
         </label> 
-        <label className="flex flex-col mb-4 mt-4">
+        <label className="flex flex-col mb-4 mt-4 text-sm">
           Nombre
           <input
             type="text"
-            className="text-black px-2 py-1 rounded-sm"
+            className="text-black p-2 rounded-sm mt-1"
             value={fullName}
+            name="fullName"
             onChange={({ target: { value }}: ChangeEvent<HTMLInputElement>) => setFullName(value)}
           />
         </label>
-        <label className="flex flex-col mb-4">
+        <label className="flex flex-col mb-4 text-sm">
           Email
           <input
             type="text"
-            className="text-black px-2 py-1 rounded-sm"
+            name="email"
+            className="text-black p-2 rounded-sm mt-1"
             value={email}
             onChange={({ target: { value }}: ChangeEvent<HTMLInputElement>) => setEmail(value)}
           />
         </label>
-        <div className="mt-4">
-          <button
-            className="rounded-full bg-white text-black px-6 py-1 hover:bg-slate-200 text-sm"
-            type="submit">
-              Guardar
-          </button>
+        <p className="font-semibold text-sm">{msg}</p>
+        {!!error && <p className="text-red-500 text-sm">Ha ocurrido un error intente de nuevo mas tarde</p>}
+        <div className="mt-[18px]">
+          <SubmitButton />
         </div>
       </form>
     </div>
